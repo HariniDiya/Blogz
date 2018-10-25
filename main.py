@@ -34,7 +34,7 @@ class User(db.Model):
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'signup']
+    allowed_routes = ['login', 'signup', 'frontpage','blogzpage']
     if request.endpoint not in allowed_routes and 'username' not in session:
         return redirect('/login')
 
@@ -50,8 +50,9 @@ def login():
             return redirect('/')
         else:
             flash('User password incorrect, or user does not exist', 'error')
-            #return redirect('/')
+
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
@@ -63,21 +64,36 @@ def logout():
 def signup():
     if request.method == 'POST':
         username = request.form['username']
+        username_error = ''
+        if (username=='' or len(username) < 3 or len(username) > 20):
+            username_error = ' Invalid User Name '
+        elif (' ' in username) == True:
+            username_error = ' Invalid User Name '
         password = request.form['password']
+        password_error = ''
+        if (password=='' or len(password) < 3 or len(password) > 20):
+            password_error = ' Invalid Password '
+        elif (' ' in password) == True:
+            password_error = ' Invalid password '
         verify = request.form['verify']
-        # TODO - validate user's data
+        verify_password_error = ''
+        if (verify!= password):
+            verify_password_error = ' Password does not match '  
 
         existing_user = User.query.filter_by(username=username).first()
-        if not existing_user:
+        # if the username already exists and username_error not already present 
+        if existing_user and (not username_error): 
+            username_error = ' User Name already exists'
+        if (not username_error) and (not password_error) and (not verify_password_error) and (not existing_user):
             new_user = User(username, password)
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
-            # TODO - "remember" the user
             return redirect('/')
         else:
-            # TODO - user better response messaging
-            return "<h1>Duplicate user</h1>"
+            return render_template('signup.html',title="Blogz", username=username,
+            username_error=username_error,passsword=password,password_error=password_error,
+            verify=verify,verify_password_error=verify_password_error)
     return render_template('signup.html')
 
 @app.route('/validate', methods=['POST','GET'])

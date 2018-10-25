@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% block content %} 
     <h1 align = "center">Blog posts!</h1>
-    {% for blog in tasks %}
-        <a href="/blog?id={{blog.id}}">{{blog.title}}</a><br>
-        {{blog.entry}}<br>
-        written by <a href="/blogz?userid={{blog.owner_id}}">{{blog.owner.username}}</a><br>
-    {% endfor %}
+    <ul style="list-style-type: none;">
+        {% for blog in tasks %}
+            <li><h3><a href="/blog?id={{blog.id}}">{{blog.title}}</a></h3><br>
+            {{blog.entry}}<br>
+            written by <a href="/blogz?userid={{blog.owner_id}}">{{blog.owner.username}}</a><br>
+            </li>
+        <hr/>
+        {% endfor %}
+    </ul>
 {% endblock %}
