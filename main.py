@@ -34,8 +34,10 @@ class User(db.Model):
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'signup', 'frontpage','blogzpage']
-    if request.endpoint not in allowed_routes and 'username' not in session:
+    #allowed_routes = ['login', 'signup', 'frontpage','blogzpage','show_blog']
+    #if request.endpoint not in allowed_routes and 'username' not in session:
+    allowed_routes = ['addentry']
+    if request.endpoint in allowed_routes and 'username' not in session:
         return redirect('/login')
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -47,7 +49,8 @@ def login():
         if user and user.password == password:
             session['username'] = username
             flash("Logged in")
-            return redirect('/')
+            #return redirect('/')
+            return redirect('/add')
         else:
             flash('User password incorrect, or user does not exist', 'error')
 
@@ -89,7 +92,8 @@ def signup():
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
-            return redirect('/')
+            #return redirect('/')
+            return redirect('/add')
         else:
             return render_template('signup.html',title="Blogz", username=username,
             username_error=username_error,passsword=password,password_error=password_error,
@@ -119,7 +123,7 @@ def validate_inputs():
             print("newly created id : " + str(new_task.id))
            # tasks = Task.query.all()
 
-            return render_template('showblog.html',title="Blog details", task=new_task)
+            return render_template('showblog.html',title="Blog details", task=new_task, user=owner)
         else:
             return render_template('addblog.html',title="Build a blog", blog_title=blog_title,blog_title_error=blog_title_error,blog_entry_error=blog_entry_error)
 
@@ -134,7 +138,9 @@ def show_blog():
     blog_id = request.args.get('id')
     print("id received from form: " + str(blog_id))
     task = Task.query.get(blog_id)
-    return render_template('showblog.html',title="Blog details", task=task)
+    #getting user information
+    user = User.query.get(task.owner_id)
+    return render_template('showblog.html',title="Blog details", task=task,user=user)
 
 @app.route('/blogz', methods=['POST', 'GET'])
 def blogzpage():

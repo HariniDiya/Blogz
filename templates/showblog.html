@@ -2,4 +2,5 @@
 {% block content %}
     <h1 align = "center">{{task.title}}</h1><br>
     {{task.entry}}<br>
+    <h5>written by <a href="/blogz?userid={{user.id}}">{{user.username}}</a></h5><br>
 {% endblock %}
