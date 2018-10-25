@@ -13,10 +13,18 @@
         </ul>
         <ul>
             <li><a href="/">home</a></li>
-            <li><a href="/blog">all posts</a></li>
-            <li><a href="/blog/newpost">new post</a></li>
+            <li><a href="/blogz">all posts</a></li>
+            <li><a href="/add">new post</a></li>
         </ul>
     </nav>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        <ul>
+        {% for category,message in messages %}
+            <li class="{{category}}">{{message}}</li>
+        {% endfor %}
+        </ul>
+    {% endwith %}
+
     {% block content %} 
    
     {% endblock %}  

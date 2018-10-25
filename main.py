@@ -1,4 +1,5 @@
-from flask  import Flask, request, redirect, render_template, session
+from flask  import Flask, request, redirect, render_template, session, flash
+
 from flask_sqlalchemy import SQLAlchemy 
 
 app = Flask(__name__)
@@ -11,11 +12,13 @@ app.secret_key = 'y337kGcys&zP3B'
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True) 
     title = db.Column(db.String(120)) 
-    entry = db.Column(db.String(240)) 
+    entry = db.Column(db.String(240))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id')) 
 
-    def __init__(self, title, entry):
+    def __init__(self, title, entry,owner):
         self.title= title
         self.entry= entry
+        self.owner= owner
 tasks = []
 
 class User(db.Model):
@@ -23,6 +26,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
+    tasks = db.relationship('Task', backref='owner')
 
     def __init__(self, username, password):
         self.username = username
@@ -42,11 +46,11 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
             session['username'] = username
+            flash("Logged in")
             return redirect('/')
         else:
-            # TODO - explain why login failed
-            return '<h1>Error!</h1>'
-
+            flash('User password incorrect, or user does not exist', 'error')
+            #return redirect('/')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -78,6 +82,7 @@ def signup():
 
 @app.route('/validate', methods=['POST','GET'])
 def validate_inputs():
+    owner = User.query.filter_by(username=session['username']).first()
     if request.method == 'POST':
         blog_title = request.form['blog_title']
         blog_title_error = ''
@@ -91,9 +96,10 @@ def validate_inputs():
         #    tasks_entry.append(blog_entry)
 
         if (not blog_title_error) and (not blog_entry_error) :
-            new_task=Task(blog_title,blog_entry)
+            new_task=Task(blog_title,blog_entry,owner)
             db.session.add(new_task)
             db.session.commit()
+
             print("newly created id : " + str(new_task.id))
            # tasks = Task.query.all()
 
@@ -101,6 +107,11 @@ def validate_inputs():
         else:
             return render_template('addblog.html',title="Build a blog", blog_title=blog_title,blog_title_error=blog_title_error,blog_entry_error=blog_entry_error)
 
+@app.route('/', methods=['POST', 'GET'])
+def frontpage():
+    users = User.query.all()
+    return render_template('index.html',title="Blogz", users=users)
+    
 @app.route('/blog', methods=['POST', 'GET'])
 def show_blog():
     #blog_id = int(request.form['id'])
@@ -109,10 +120,16 @@ def show_blog():
     task = Task.query.get(blog_id)
     return render_template('showblog.html',title="Blog details", task=task)
 
-@app.route('/', methods=['POST', 'GET'])
-def frontpage():
-    tasks = Task.query.all()
+@app.route('/blogz', methods=['POST', 'GET'])
+def blogzpage():
+    user_id = request.args.get('userid')
+    if user_id:
+        user = User.query.get(user_id)
+        tasks = user.tasks
+    else:
+        tasks = Task.query.all()
     return render_template('blog.html',title="Build a blog", tasks=tasks)
+    
 
 @app.route('/add', methods=['POST', 'GET'])
 def addentry():
